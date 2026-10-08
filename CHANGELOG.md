@@ -12,3 +12,5 @@
 - `site` sets `$HOME/reference` paths only when those files exist
 - OMIM genemap2 is not bundled; pass `--omim_table` if you have a licensed copy
 - GitHub CI: Nextflow config + Python syntax + conda env
+- `./install.sh` installs Nextflow and the conda env on first install
+- Every run checks the profile's tools before any analysis step

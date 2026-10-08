@@ -27,15 +27,20 @@ Reports (per lane):
 
 ## Requirements
 
-| Component | Notes |
-|-----------|--------|
-| [Nextflow](https://www.nextflow.io/) ≥ 23.04 | `curl -s https://get.nextflow.io \| bash` |
-| One of | host tools, **conda**, **Docker**, or **Singularity** |
-| Data | R1/R2 FASTQ + reference FASTA (+ optional BED, ClinVar, dbSNP, SnpEff DB) |
+Java 11 or 17, plus one way to supply the bioinformatics tools. Reference FASTA and FASTQs stay on your disk. `./install.sh` installs Nextflow (if missing) and creates the `nf-exome-wes` conda env from `environment.yml` the first time. Re-running it does not rebuild an env that already exists.
+
+Every `nextflow run` checks the chosen profile before alignment or calling:
+
+| Profile | Check |
+|---------|--------|
+| `local` (also `lab`, `site`) | `fastp`, `bwa`, `samtools`, `bcftools`, `bgzip`, `tabix`, `python3` on `PATH`. `gatk` when `--pipeline` is `gatk` or `both`. SnpEff jar or `snpEff` unless annotation is skipped. |
+| `conda`, `mamba` | `conda` or `mamba` is installed. The first run builds `environment.yml`. |
+| `docker` | `docker` is on `PATH`. Images are pulled on first use. |
+| `singularity` | `singularity` or `apptainer` is on `PATH`. |
 
 ```bash
-mamba env create -f environment.yml
-mamba activate nf-exome-wes
+./install.sh
+conda activate nf-exome-wes
 ```
 
 ## Quick start

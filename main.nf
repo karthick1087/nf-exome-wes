@@ -116,12 +116,67 @@ def optionalFile(explicit, List fallbacks) {
     return hit ? file(hit) : noFile()
 }
 
+def commandExists(String name) {
+    def proc = ['bash', '-c', "command -v ${name}"].execute()
+    proc.waitFor()
+    return proc.exitValue() == 0
+}
+
+// Runs at the start of every analysis. --help returns before this.
+def checkRequirements(String profileNames) {
+    def profiles = profileNames.tokenize(',').collect { it.trim() }
+    def usesDocker = 'docker' in profiles
+    def usesSingularity = 'singularity' in profiles
+    def usesConda = profiles.any { it in ['conda', 'mamba'] }
+    def missing = []
+
+    if (usesDocker) {
+        if (!commandExists('docker')) missing << 'docker'
+    } else if (usesSingularity) {
+        if (!commandExists('singularity') && !commandExists('apptainer')) missing << 'singularity or apptainer'
+    } else if (usesConda) {
+        if (!commandExists('conda') && !commandExists('mamba') && !commandExists('micromamba')) {
+            missing << 'conda or mamba'
+        }
+        if (!file("${projectDir}/environment.yml").exists()) missing << 'environment.yml'
+    } else {
+        ['fastp', 'bwa', 'samtools', 'bcftools', 'bgzip', 'tabix', 'python3'].each { tool ->
+            if (!commandExists(tool)) missing << tool
+        }
+        if (params.pipeline in ['gatk', 'both'] && !commandExists('gatk')) missing << 'gatk'
+        if (!params.skip_snpeff && !params.skip_annotation) {
+            def home = System.getenv('HOME') ?: ''
+            def jar = params.snpeff_jar
+            def snpeffOk = (jar && file(jar).exists()) || commandExists('snpEff') || commandExists('snpeff')
+            if (!snpeffOk) {
+                snpeffOk = firstExisting([
+                    home ? "${home}/anaconda3/share/snpeff-4.3.1t-0/snpEff.jar" : null,
+                    home ? "${home}/reference/snpeff/snpEff.jar" : null,
+                ])
+            }
+            if (!snpeffOk) missing << 'snpEff or --snpeff_jar'
+        }
+    }
+
+    if (missing) {
+        error """Missing requirements: ${missing.join(', ')}
+Checked before this run (${profiles.join(', ')}).
+Install once with ./install.sh, then activate the env or use -profile conda.
+Containers: -profile docker or -profile singularity.
+For GATK on this host: export PATH="\$HOME/reference/tools/gatk-4.6.1.0:\$PATH"
+"""
+    }
+    log.info "Requirements OK (${profiles.join(', ')})"
+}
+
 workflow {
 
     if (params.help) {
         log.info helpMessage()
         return
     }
+
+    checkRequirements(workflow.profile)
 
     log.info """
     ================================================================================
