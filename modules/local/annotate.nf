@@ -176,13 +176,15 @@ process SNPEFF_ANNOTATE {
     label 'process_high_memory'
 
     publishDir path: { "${params.outdir}/${meta.id}/${meta.lane}/annotation/snpeff" }, mode: params.publish_dir_mode,
-        pattern: '*'
+        pattern: '*.{csv,txt}'
 
     input:
     tuple val(meta), path(vcf), path(tbi)
+    path snpeff_jar, stageAs: 'snpEff.jar'
+    path snpeff_data, stageAs: 'snpeff_data'
 
     output:
-    tuple val(meta), path("${meta.id}.snpeff.vcf.gz"), path("${meta.id}.snpeff.vcf.gz.tbi"), emit: vcf
+    tuple val(meta), path("${meta.id}.snpeff.vcf"), emit: vcf
     path "${meta.id}_snpeff.csv", optional: true, emit: csv
     path "${meta.id}_snpeff.genes.txt", optional: true, emit: genes
     path "versions.yml", emit: versions
@@ -192,40 +194,72 @@ process SNPEFF_ANNOTATE {
 
     script:
     def db = params.snpeff_db
-    def data_dir = params.snpeff_data ? "-dataDir ${params.snpeff_data}" : ''
-    def jar = params.snpeff_jar
     def mem = params.snpeff_mem
     def java = params.java ?: 'java'
+    // The SnpEff image is 5.2 (Java + snpEff + gzip). It cannot read a 4.3 database
+    // and it has no bcftools, bgzip, or tabix. A staged jar runs on the image JRE.
+    // BCFTOOLS_PACK_SNPEFF compresses the plain VCF.
     """
-    bcftools view ${vcf} -Ov -o ${meta.id}.input.vcf
+    gzip -dc ${vcf} > ${meta.id}.input.vcf
 
-    if [[ -n "${jar}" && -f "${jar}" ]]; then
-        ${java} -Xmx${mem} -jar ${jar} \\
-            ${data_dir} -v \\
+    # Nextflow stages these as symlinks. SnpEff hangs on a symlink -dataDir
+    # and runs when given the canonical host path (Docker mounts that path).
+    data_arg=()
+    if [[ -d snpeff_data ]]; then
+        data_arg=(-dataDir "\$(readlink -f snpeff_data)")
+    fi
+
+    if [[ -s snpEff.jar ]]; then
+        ${java} -Xmx${mem} -jar "\$(readlink -f snpEff.jar)" \\
+            "\${data_arg[@]}" -v \\
             -csvStats ${meta.id}_snpeff.csv \\
             ${db} ${meta.id}.input.vcf > ${meta.id}.snpeff.vcf
     else
-        # container / PATH snpEff
-        snpEff -Xmx${mem} ${data_dir} -v \\
+        snpEff -Xmx${mem} "\${data_arg[@]}" -v \\
             -csvStats ${meta.id}_snpeff.csv \\
             ${db} ${meta.id}.input.vcf > ${meta.id}.snpeff.vcf
     fi
-
-    bgzip -f ${meta.id}.snpeff.vcf
-    tabix -f -p vcf ${meta.id}.snpeff.vcf.gz
     rm -f ${meta.id}.input.vcf
-    # snpEff may write genes.txt with various names
+
     for g in snpEff_genes.txt ${meta.id}_snpeff.genes.txt genes.txt; do
         if [[ -f "\$g" && "\$g" != "${meta.id}_snpeff.genes.txt" ]]; then
             mv -f "\$g" ${meta.id}_snpeff.genes.txt || true
         fi
     done
-    # csvStats may create ${meta.id}_snpeff.genes.txt already
     touch ${meta.id}_snpeff.genes.txt 2>/dev/null || true
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        snpeff: \$(${java} -jar ${jar} -version 2>&1 | head -1 || echo 'jar')
+        snpeff: \$({ if [[ -s snpEff.jar ]]; then ${java} -jar "\$(readlink -f snpEff.jar)" -version 2>&1 | head -1; else snpEff -version 2>&1 | head -1; fi; } || echo unknown)
+    END_VERSIONS
+    """
+}
+
+process BCFTOOLS_PACK_SNPEFF {
+    tag "$meta.id"
+    label 'process_low'
+
+    publishDir path: { "${params.outdir}/${meta.id}/${meta.lane}/annotation/snpeff" }, mode: params.publish_dir_mode,
+        pattern: '*.{vcf.gz,tbi}'
+
+    input:
+    tuple val(meta), path(vcf)
+
+    output:
+    tuple val(meta), path("${meta.id}.snpeff.vcf.gz"), path("${meta.id}.snpeff.vcf.gz.tbi"), emit: vcf
+    path "versions.yml", emit: versions
+
+    when:
+    !params.skip_snpeff && !params.skip_annotation
+
+    script:
+    """
+    bcftools view -Oz -o ${meta.id}.snpeff.vcf.gz ${vcf}
+    bcftools index -t ${meta.id}.snpeff.vcf.gz
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bcftools: \$(bcftools --version 2>&1 | head -1 | sed 's/bcftools //')
     END_VERSIONS
     """
 }

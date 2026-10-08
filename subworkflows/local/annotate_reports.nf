@@ -5,6 +5,7 @@ include {
     BCFTOOLS_ANNOTATE_GNOMAD
     BCFTOOLS_FINALIZE_ANNOT
     SNPEFF_ANNOTATE
+    BCFTOOLS_PACK_SNPEFF
     CLINICAL_REPORTS
 } from '../../modules/local/annotate'
 
@@ -15,6 +16,8 @@ workflow ANNOTATE_REPORTS {
     clinvar
     gnomad
     omim
+    snpeff_jar
+    snpeff_data
 
     main:
     ch_versions = Channel.empty()
@@ -45,19 +48,17 @@ workflow ANNOTATE_REPORTS {
     ch_versions = ch_versions.mix(BCFTOOLS_FINALIZE_ANNOT.out.versions)
     ch_annot = BCFTOOLS_FINALIZE_ANNOT.out.vcf
 
-    // SnpEff
-    SNPEFF_ANNOTATE(ch_annot)
+    // SnpEff writes a plain VCF. Pack it in the bcftools image (bgzip + tabix).
+    SNPEFF_ANNOTATE(ch_annot, snpeff_jar, snpeff_data)
     ch_versions = ch_versions.mix(SNPEFF_ANNOTATE.out.versions)
-
-    // Join snpeff + fully_annotated for reports
-    ch_snpeff = SNPEFF_ANNOTATE.out.vcf
-        .ifEmpty { ch_annot.map { m, v, t -> [m, v, t] } }
+    BCFTOOLS_PACK_SNPEFF(SNPEFF_ANNOTATE.out.vcf)
+    ch_versions = ch_versions.mix(BCFTOOLS_PACK_SNPEFF.out.versions)
 
     // Prefer snpeff when available; always pass bcftools annotated
     ch_for_reports = ch_annot
         .map { m, v, t -> [m.id, m, v, t] }
         .join(
-            SNPEFF_ANNOTATE.out.vcf.map { m, v, t -> [m.id, v, t] },
+            BCFTOOLS_PACK_SNPEFF.out.vcf.map { m, v, t -> [m.id, v, t] },
             remainder: true
         )
         .map { id, m, bcf_v, bcf_t, snp_v, snp_t ->
@@ -73,7 +74,7 @@ workflow ANNOTATE_REPORTS {
     clinical    = CLINICAL_REPORTS.out.clinical
     significant = CLINICAL_REPORTS.out.significant
     acmg        = CLINICAL_REPORTS.out.acmg
-    snpeff_vcf  = SNPEFF_ANNOTATE.out.vcf
+    snpeff_vcf  = BCFTOOLS_PACK_SNPEFF.out.vcf
     annotated   = ch_annot
     versions    = ch_versions
 }

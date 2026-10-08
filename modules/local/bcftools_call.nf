@@ -48,7 +48,7 @@ process BCFTOOLS_MPILEUP_CALL {
         echo "Final VCF:       ${meta.id}.filtered.vcf.gz"
         echo "Variants (filt): \$(bcftools view -H ${meta.id}.filtered.vcf.gz | wc -l)"
         echo ""
-        samtools flagstat ${bam}
+        echo "Alignment flagstat: published with the BAM as ${meta.id}.flagstat.txt"
     } > ${meta.id}_summary.txt
 
     cat <<-END_VERSIONS > versions.yml

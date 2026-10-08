@@ -57,6 +57,7 @@ def helpMessage() {
     Annotation:
       --dbsnp_vcf --clinvar_vcf --gnomad_vcf
       --snpeff_jar --snpeff_data --snpeff_db hg38
+      Docker stages that jar and data dir into the SnpEff image.
       --omim_table      optional OMIM genemap2 TSV (not bundled)
       --skip_annotation --skip_snpeff
 
@@ -229,6 +230,8 @@ workflow {
         ])
         if (dataDir) params.snpeff_data = dataDir
     }
+    def snpeffJar = (params.snpeff_jar && file(params.snpeff_jar).exists()) ? file(params.snpeff_jar) : noFile()
+    def snpeffData = (params.snpeff_data && file(params.snpeff_data).isDirectory()) ? file(params.snpeff_data) : noFile()
 
     def dbsnp_bqsr_path = params.dbsnp_bqsr
     if (!dbsnp_bqsr_path && params.known_sites_dir) {
@@ -314,7 +317,9 @@ workflow {
             ch_dbsnp_annot,
             ch_clinvar,
             ch_gnomad,
-            ch_omim
+            ch_omim,
+            snpeffJar,
+            snpeffData
         )
         ch_versions = ch_versions.mix(ANNOTATE_REPORTS.out.versions)
     }

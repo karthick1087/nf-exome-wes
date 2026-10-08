@@ -13,5 +13,8 @@
 - OMIM genemap2 is not bundled; pass `--omim_table` if you have a licensed copy
 - GitHub CI: Nextflow config + Python syntax + conda env
 - Docker BWA image tag points at a published Quay build (`bwa` + `samtools`)
+- Docker bcftools calling no longer runs `samtools` (that image has no samtools). Alignment flagstat stays with the BAM
+- Docker SnpEff runs `--snpeff_jar` with `--snpeff_data` mounted into the image, then compresses the VCF in the bcftools image. The SnpEff 5.2 image cannot read a 4.3 database and has no `bgzip` or `tabix`
+- GATK `4.6.1.0` image already includes `bcftools`, `samtools`, `tabix`, and `bgzip`
 - `./install.sh` installs Nextflow and the conda env on first install
 - Every run checks the profile's tools before any analysis step

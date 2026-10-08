@@ -99,7 +99,7 @@ Every run prints `Requirements OK (<profile>)` before alignment. If a tool is mi
 |---------|----------------------------------|
 | `local`, `lab`, `site` | `fastp`, `bwa`, `samtools`, `bcftools`, `bgzip`, `tabix`, `python3`. Also `gatk` when `--pipeline` is `gatk` or `both`. SnpEff unless you pass `--skip_snpeff` or `--skip_annotation`. |
 | `conda`, `mamba` | `conda` or `mamba`. The first run builds `environment.yml`. |
-| `docker` | `docker`. Images download on first use. |
+| `docker` | `docker`. Images download on first use. SnpEff uses `--snpeff_jar` and `--snpeff_data` inside the image when those paths exist. The bcftools image then compresses that VCF. |
 | `singularity` | `singularity` or `apptainer`. |
 | `slurm` | Same tools as `local`, plus a SLURM cluster. |
 | `test` | Same tools as `local`. Uses 2 CPUs and skips annotation. |
