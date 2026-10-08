@@ -1,0 +1,34 @@
+# Example parameter file for nf-exome-wes
+# Usage:
+#   nextflow run main.nf -profile local,conda \
+#     -params-file assets/params.example.yml
+
+pipeline: both          # bcftools | gatk | both
+threads: 16
+min_qual: 30
+min_depth: 10
+outdir: results
+
+input: assets/samplesheet.csv
+ref: /path/to/hg38.fasta
+
+# Optional capture BED (recommended for WES)
+# exome_bed: /path/to/exome_targets.bed
+
+# Annotation databases (optional but recommended)
+# dbsnp_vcf: /path/to/dbsnp.vcf.gz
+# clinvar_vcf: /path/to/clinvar.vcf.gz
+# gnomad_vcf: /path/to/gnomad.vcf.gz
+
+# SnpEff
+# snpeff_jar: /path/to/snpEff.jar
+# snpeff_data: /path/to/snpeff/data
+# snpeff_db: hg38
+
+# GATK BQSR known sites
+# dbsnp_bqsr: /path/to/dbsnp.vcf.gz
+# mills_indels: /path/to/mills.vcf.gz
+# known_sites_dir: /path/to/known_sites
+
+skip_annotation: false
+skip_snpeff: false

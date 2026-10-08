@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, dev]
+  pull_request:
+    branches: [main, master, dev]
+
+jobs:
+  validate:
+    name: Nextflow syntax + lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nextflow
+        uses: nf-core/setup-nextflow@v2
+        with:
+          version: 'latest-stable'
+
+      - name: Nextflow version
+        run: nextflow -version
+
+      - name: Config check
+        run: |
+          nextflow config -profile test,docker > /tmp/nf.config.out
+          head -50 /tmp/nf.config.out
+
+      - name: Help text loads the workflow
+        run: |
+          nextflow run . --help | tee /tmp/nf.help.out
+          grep -q 'nf-exome-wes' /tmp/nf.help.out
+
+      - name: Check report scripts parse
+        run: |
+          python3 -m py_compile bin/*.py
+
+      - name: Tree sanity
+        run: |
+          test -f main.nf
+          test -f nextflow.config
+          test -f assets/samplesheet.csv
+          test -d modules/local
+          test -d subworkflows/local
+          test -f bin/vcf_to_clinical_report.py
+          test ! -f assets/resources/use_omim_table.txt
+          test ! -f bin/resources/use_omim_table.txt
+          test ! -f assets/params.production.yml
+          find modules subworkflows -name '*.nf' | wc -l
+          if git grep -I -n -e '/media/' -e 'prithivi' -e '1325007936' -- ':!CHANGELOG.md' ':!.github/workflows/ci.yml'; then
+            echo "Local sample paths are still tracked"
+            exit 1
+          fi
+
+  conda-env:
+    name: Conda env YAML
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: environment.yml
+          environment-name: nf-exome-wes
+          cache-environment: true
+          generate-run-shell: true
+      - shell: bash -el {0}
+        run: |
+          micromamba activate nf-exome-wes
+          fastp --version
+          bwa 2>&1 | head -1 || true
+          samtools --version | head -1
+          bcftools --version | head -1

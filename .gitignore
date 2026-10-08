@@ -1,0 +1,56 @@
+# Nextflow
+.work/
+work/
+.nextflow/
+.nextflow.*
+results/
+results-*/
+*.html
+!docs/**
+pipeline_info/
+dag-*.html
+timeline-*.html
+report-*.html
+trace-*.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+*~
+
+# Data (do not commit large genomes / FASTQs)
+*.fastq.gz
+*.fq.gz
+*.bam
+*.bai
+*.vcf.gz
+*.fasta
+*.fa
+*.dict
+*.fai
+*.bwt
+*.pac
+*.ann
+*.amb
+*.sa
+assets/testdata/
+
+# Run logs (may name samples and host paths)
+logs/
+*.log
+
+# Secrets / local overrides
+.nextflow.local.config
+params.local.json
+assets/params.production.yml
+assets/params.local.yml
+.env

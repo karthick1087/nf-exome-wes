@@ -1,0 +1,16 @@
+name: nf-exome-wes
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.11
+  - fastp=0.23.4
+  - bwa=0.7.17
+  - samtools=1.19
+  - bcftools=1.19
+  - gatk4=4.5.0.0
+  - snpeff=5.2
+  - htslib
+  - tabix
+  - pip

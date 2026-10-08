@@ -1,0 +1,4 @@
+chrom	pos	ref	alt	rsid	note
+# Optional site-specific rsID overrides (tab-separated). Example rows:
+# 12	102894920	T	C	rs1226613045	PAH splice example
+# 12	114399514	A	G	rs1269970792	TBX5 missense example
