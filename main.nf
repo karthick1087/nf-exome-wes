@@ -153,10 +153,12 @@ workflow {
     ])
     ch_gnomad = params.gnomad_vcf ? file(params.gnomad_vcf, checkIfExists: true) : noFile()
 
-    // OMIM genemap2 is optional. A missing table leaves disorder lookup to ClinVar.
-    def omimDefault = "${projectDir}/assets/resources/use_omim_table.txt"
-    def omimPath = params.omim_table ?: omimDefault
-    ch_omim = file(omimPath).exists() ? file(omimPath) : noFile()
+    // OMIM genemap2 is optional and is not part of the repository.
+    def omimHit = params.omim_table ?: firstExisting([
+        "${projectDir}/assets/resources/use_omim_table.txt",
+        home ? "${home}/reference/clinical_wes/use_omim_table.txt" : null,
+    ])
+    ch_omim = (omimHit && file(omimHit).exists()) ? file(omimHit) : noFile()
 
     if (!params.snpeff_jar) {
         def jar = firstExisting([

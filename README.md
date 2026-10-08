@@ -103,7 +103,7 @@ All large inputs are **paths you pass in** (CLI or params file). Nothing is bake
 | dbSNP / ClinVar / gnomAD | `--dbsnp_vcf` `--clinvar_vcf` `--gnomad_vcf` |
 | SnpEff | `--snpeff_jar` `--snpeff_data` `--snpeff_db` |
 | BQSR known sites | `--dbsnp_bqsr` `--mills_indels` or `--known_sites_dir` |
-| OMIM genemap2 | Optional `--omim_table` (not bundled; supply a file you are licensed to use) |
+| OMIM genemap2 | Optional `--omim_table`, or `$HOME/reference/clinical_wes/use_omim_table.txt` when that file exists. Not bundled. |
 
 See [docs/ANALYSIS.md](docs/ANALYSIS.md) for a full checklist.
 
