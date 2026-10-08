@@ -43,7 +43,7 @@ mamba activate nf-exome-wes
 ### 1. Clone
 
 ```bash
-git clone https://github.com/infectious-coder/nf-exome-wes.git
+git clone https://github.com/karthick1087/nf-exome-wes.git
 cd nf-exome-wes
 ```
 
@@ -170,12 +170,12 @@ nf-exome-wes/
 
 ```bash
 cd nf-exome-wes
-git remote add origin git@github.com:infectious-coder/nf-exome-wes.git
+git remote add origin git@github.com:karthick1087/nf-exome-wes.git
 git push -u origin main
 ```
 
 ```bash
-nextflow run infectious-coder/nf-exome-wes -r main -profile docker \
+nextflow run karthick1087/nf-exome-wes -r main -profile docker \
   --input samplesheet.csv --ref hg38.fasta --pipeline both
 ```
 
