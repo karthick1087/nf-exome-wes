@@ -166,13 +166,6 @@ nf-exome-wes/
 - [docs/ANALYSIS.md](docs/ANALYSIS.md) — analysis workflow & QC  
 - [docs/output_layout.md](docs/output_layout.md) — published paths  
 
-## Push to GitHub
-
-```bash
-cd nf-exome-wes
-git remote add origin git@github.com:karthick1087/nf-exome-wes.git
-git push -u origin main
-```
 
 ```bash
 nextflow run karthick1087/nf-exome-wes -r main -profile docker \
