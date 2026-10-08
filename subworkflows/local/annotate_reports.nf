@@ -23,22 +23,22 @@ workflow ANNOTATE_REPORTS {
     ch_versions = Channel.empty()
     ch_work = vcf
 
-    // Step 1 dbSNP (optional)
-    if (params.dbsnp_vcf) {
+    // Step 1 dbSNP (optional). Run when a file was discovered, not only when the param was set on the CLI.
+    if (dbsnp.name != 'NO_FILE') {
         BCFTOOLS_ANNOTATE_DBSNP(ch_work, dbsnp)
         ch_versions = ch_versions.mix(BCFTOOLS_ANNOTATE_DBSNP.out.versions)
         ch_work = BCFTOOLS_ANNOTATE_DBSNP.out.vcf
     }
 
     // Step 2 ClinVar (optional)
-    if (params.clinvar_vcf) {
+    if (clinvar.name != 'NO_FILE') {
         BCFTOOLS_ANNOTATE_CLINVAR(ch_work, clinvar)
         ch_versions = ch_versions.mix(BCFTOOLS_ANNOTATE_CLINVAR.out.versions)
         ch_work = BCFTOOLS_ANNOTATE_CLINVAR.out.vcf
     }
 
     // Step 3 gnomAD (optional)
-    if (params.gnomad_vcf) {
+    if (gnomad.name != 'NO_FILE') {
         BCFTOOLS_ANNOTATE_GNOMAD(ch_work, gnomad)
         ch_versions = ch_versions.mix(BCFTOOLS_ANNOTATE_GNOMAD.out.versions)
         ch_work = BCFTOOLS_ANNOTATE_GNOMAD.out.vcf

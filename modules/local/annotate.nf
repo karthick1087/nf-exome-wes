@@ -202,6 +202,11 @@ process SNPEFF_ANNOTATE {
     """
     gzip -dc ${vcf} > ${meta.id}.input.vcf
 
+    if [[ ! -s snpEff.jar && ! -d snpeff_data ]]; then
+        echo "SnpEff jar and data directory were not staged. Set --snpeff_jar and --snpeff_data." >&2
+        exit 1
+    fi
+
     # Nextflow stages these as symlinks. SnpEff hangs on a symlink -dataDir
     # and runs when given the canonical host path (Docker mounts that path).
     data_arg=()

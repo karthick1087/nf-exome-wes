@@ -216,22 +216,19 @@ workflow {
     ])
     ch_omim = (omimHit && file(omimHit).exists()) ? file(omimHit) : noFile()
 
-    if (!params.snpeff_jar) {
-        def jar = firstExisting([
-            home ? "${home}/anaconda3/share/snpeff-4.3.1t-0/snpEff.jar" : null,
-            home ? "${home}/reference/snpeff/snpEff.jar" : null,
-        ])
-        if (jar) params.snpeff_jar = jar
-    }
-    if (!params.snpeff_data) {
-        def dataDir = firstExisting([
-            home ? "${home}/anaconda3/share/snpeff-4.3.1t-0/data" : null,
-            home ? "${home}/reference/snpeff/data" : null,
-        ])
-        if (dataDir) params.snpeff_data = dataDir
-    }
-    def snpeffJar = (params.snpeff_jar && file(params.snpeff_jar).exists()) ? file(params.snpeff_jar) : noFile()
-    def snpeffData = (params.snpeff_data && file(params.snpeff_data).isDirectory()) ? file(params.snpeff_data) : noFile()
+    // Nextflow ignores a second write to params.*, so discovered paths stay in locals.
+    def jarHit = params.snpeff_jar ?: firstExisting([
+        home ? "${home}/anaconda3/share/snpeff-4.3.1t-0/snpEff.jar" : null,
+        home ? "${home}/reference/snpeff/snpEff.jar" : null,
+    ])
+    def dataHit = params.snpeff_data ?: firstExisting([
+        home ? "${home}/anaconda3/share/snpeff-4.3.1t-0/data" : null,
+        home ? "${home}/reference/snpeff/data" : null,
+    ])
+    def snpeffJar = (jarHit && file(jarHit).exists()) ? file(jarHit) : noFile()
+    def snpeffData = (dataHit && file(dataHit).isDirectory()) ? file(dataHit) : noFile()
+    log.info "SnpEff jar: ${snpeffJar}"
+    log.info "SnpEff data: ${snpeffData}"
 
     def dbsnp_bqsr_path = params.dbsnp_bqsr
     if (!dbsnp_bqsr_path && params.known_sites_dir) {
