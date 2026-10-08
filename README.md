@@ -1,6 +1,6 @@
 # nf-exome-wes
 
-**GitHub-ready Nextflow DSL2 pipeline** for whole-exome sequencing (WES) germline analysis.
+**Nextflow DSL2 pipeline** for whole-exome sequencing (WES) germline analysis.
 
 Runs **bcftools** and/or **GATK** clinical lanes and writes a standard per-sample layout:
 
